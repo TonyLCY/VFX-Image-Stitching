@@ -44,7 +44,8 @@ function features = HarrisDetector(image)
     %r2 = radius ^ 2;
     for i = 1:size(resultY)
         % Ignore features with another feature within distance radius
-        %{flag = 0;
+        %{
+        flag = 0;
         for j = 1:size(features, 2)
             if (resultY(i) - features{j}.y) ^ 2 + (resultX(i) - features{j}.x) ^ 2 < r2
                 flag = 1;

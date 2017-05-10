@@ -18,7 +18,7 @@ classdef Feature
             wid = 2 * halfwid + 1;
             
             % Exclude out of bound patch
-            if (y - halfwid) < 1 | (x - halfwid) < 1 | (y + halfwid) > row | (x + halfwid) > col
+            if (y - halfwid) < 1 || (x - halfwid) < 1 || (y + halfwid) > row || (x + halfwid) > col
                 feature.x = NaN;
                 return;
             end
@@ -96,7 +96,7 @@ classdef Feature
                         rot_dir = round([y_dir, x_dir] * rot);
                         rot_y_coor = y + rot_dir(1);
                         rot_x_coor = x + rot_dir(2);
-                        if rot_y_coor < 1 | rot_x_coor < 1 | rot_y_coor > row | rot_x_coor > col
+                        if rot_y_coor < 1 || rot_x_coor < 1 || rot_y_coor > row || rot_x_coor > col
                             rot_mag(y_coor, x_coor) = 0;
                             rot_ang(y_coor, x_coor) = 0;
                         else
@@ -111,7 +111,7 @@ classdef Feature
                 weighted_rot_mag = kernel .* rot_mag;
 
                 % Extract Feature description
-                desc = zeros(128);
+                desc = zeros(1, 128);
                 win_size = wid / 4;
                 for y_coor = 1:wid
                     for x_coor = 1:wid
@@ -125,7 +125,7 @@ classdef Feature
                 % Normalized description
                 desc = desc / norm(desc);
                 % Threshold largest value to 0.2 to reduce influence of large gradient magnitudes
-                desc(find(desc > 0.2)) = 0.2;
+                desc(desc > 0.2) = 0.2;
                 desc = desc / norm(desc);
 
                 feature.descripts{i} = desc;

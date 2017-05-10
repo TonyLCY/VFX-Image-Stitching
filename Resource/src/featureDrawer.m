@@ -7,5 +7,5 @@ function featureDrawer(image, features, name)
         image(x, y, 2) = 0;
         image(x, y, 3) = 0;
     end
-    imwrite(image, ['../result/featues_', name, '.jpg']);
+    imwrite(image, ['../result/features_', name, '.jpg']);
 end
