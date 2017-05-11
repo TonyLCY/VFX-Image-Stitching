@@ -7,6 +7,7 @@ function matchDrawer(img2, img1, match, name)
     n = size(match, 1);
     pos = zeros(n, 4);
     for i = 3000:3500
+    %for i = 1:size(match)
         pos(i,1) = match(i,2);
         pos(i,2) = match(i,1);
         pos(i,3) = match(i,4)+W;

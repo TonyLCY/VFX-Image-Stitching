@@ -1,5 +1,5 @@
-%function main(folder)
-    folder = '..\input_image\parrington';
+function main(folder)
+    %folder = '..\input_image\parrington';
     % Read images
     disp('Loading images...');
     [images, N] = reader(folder);
@@ -14,6 +14,16 @@
         imgsFeat{i} = features;
     end
 
+    %{
+    disp(imgsFeat{1}{3}.x);
+    disp(imgsFeat{1}{3}.y);
+    disp(imgsFeat{1}{3}.orient);
+    disp(imgsFeat{1}{3}.descript);
+    disp(imgsFeat{1}{32}.x);
+    disp(imgsFeat{1}{32}.y);
+    disp(imgsFeat{1}{32}.orient);
+    disp(imgsFeat{1}{32}.descript);
+    %}
     % Match features
     focalLength = 705;
     matches = {};
@@ -30,8 +40,21 @@
         [H,W,C] = size(images{i});
         for j=1:n2
             desc2 = imgsFeat{i+1}{j}.descript;
-            feat1 = imgsFeat{i}{knnsearch(searcher,desc2)};
+            %{
+            [IDX, D] = knnsearch(searcher, desc2, 'IncludeTies', true);
+            disp(IDX);
+            disp(D);
+            disp('======');
+            %}
+            [id, dist] = knnsearch(searcher, desc2, 'k', 2);
+            if dist(1) / dist(2) > 0.8
+                continue;
+            end
+           
+            %feat1 = imgsFeat{i}{knnsearch(searcher,desc2)};
+            feat1 = imgsFeat{i}{id(1)};
             feat2 = imgsFeat{i+1}{j};
+            % fix index problem
             matches{i}(j,1:2) = [feat2.x feat2.y];%getCylindricalCoordinates(feat2.x,feat2.y,H,W,focalLength);
             matches{i}(j,3:4) = [feat1.x feat1.y];%getCylindricalCoordinates(feat1.x,feat1.y,H,W,focalLength);
         end

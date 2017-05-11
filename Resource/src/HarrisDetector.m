@@ -40,8 +40,8 @@ function features = HarrisDetector(image)
     % Create Feature objects
     [resultY, resultX] = find(result);
     features = {};
-    %radius = 8;
-    %r2 = radius ^ 2;
+    radius = 8;
+    r2 = radius ^ 2;
     for i = 1:size(resultY)
         % Ignore features with another feature within distance radius
         %{

@@ -44,12 +44,12 @@ classdef Feature
             theta = zeros(y_dif, x_dif);
 
             % Compute magnitude and theta
-            for y = 1:y_dif
-                for x = 1:x_dif
-                    magnitude(y, x) = sqrt((img(y + y_l - 1, x + x_l) - img(y + y_l - 1, x + x_l - 2)) ^ 2
-                                    + (img(y + y_l, x + x_l - 1) - img(y + y_l - 2, x + x_l - 1)) ^ 2);
-                    theta(y, x) = atan2((img(y + y_l, x + x_l - 1) - img(y + y_l - 2, x + x_l - 1)) 
-                                    / (img(y + y_l - 1, x + x_l) - img(y + y_l - 1, x + x_l - 2))); 
+            for yt = 1:y_dif
+                for xt = 1:x_dif
+                    magnitude(yt, xt) = sqrt((img(yt + y_l - 1, xt + x_l) - img(yt + y_l - 1, xt + x_l - 2)) ^ 2
+                                    + (img(yt + y_l, xt + x_l - 1) - img(yt + y_l - 2, xt + x_l - 1)) ^ 2);
+                    theta(yt, xt) = atan2((img(yt + y_l, xt + x_l - 1) - img(yt + y_l - 2, xt + x_l - 1)) 
+                                    / (img(yt + y_l - 1, xt + x_l) - img(yt + y_l - 1, xt + x_l - 2))); 
                 end
             end
             %}
@@ -94,13 +94,14 @@ classdef Feature
                         x_dir = x_coor - coor_dir_trans;
                         y_dir = y_coor - coor_dir_trans;
                         rot_dir = round([y_dir, x_dir] * rot);
-                        rot_y_coor = y + rot_dir(1);
-                        rot_x_coor = x + rot_dir(2);
+                        rot_y_coor = feature.y + rot_dir(1);
+                        rot_x_coor = feature.x + rot_dir(2);
                         if rot_y_coor < 1 || rot_x_coor < 1 || rot_y_coor > row || rot_x_coor > col
                             rot_mag(y_coor, x_coor) = 0;
                             rot_ang(y_coor, x_coor) = 0;
                         else
                             rot_mag(y_coor, x_coor) = magnitude(rot_y_coor, rot_x_coor);
+                            %rot_ang(y_coor, x_coor) = angle(rot_y_coor, rot_x_coor);
                             rot_ang(y_coor, x_coor) = angle(rot_y_coor, rot_x_coor) - feature.orients(i);
                             if rot_ang(y_coor, x_coor) < 0
                                 rot_ang(y_coor, x_coor) = rot_ang(y_coor, x_coor) + 2 * pi;
@@ -109,6 +110,10 @@ classdef Feature
                     end
                 end
                 weighted_rot_mag = kernel .* rot_mag;
+                %weighted_rot_mag = rot_mag;
+                %disp(weighted_rot_mag);
+                %disp(rot_ang);
+                %disp('====');
 
                 % Extract Feature description
                 desc = zeros(1, 128);
@@ -127,6 +132,7 @@ classdef Feature
                 % Threshold largest value to 0.2 to reduce influence of large gradient magnitudes
                 desc(desc > 0.2) = 0.2;
                 desc = desc / norm(desc);
+                %disp(desc);
 
                 feature.descripts{i} = desc;
             end
