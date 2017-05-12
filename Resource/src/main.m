@@ -1,12 +1,14 @@
-function main(folder)
-    %folder = '..\input_image\parrington';
+%function main(folder)
+    folder = '..\input_image\parrington';
     % Read images
     disp('Loading images...');
     [images, N] = reader(folder);
-
+    
     % Detect features
     disp('Detecting features...');
     N = 2;
+    [H, W, C] = size(images{1});
+    %{
     for i = 1:N
         features = HarrisDetector(images{i});
         disp(size(features));
@@ -36,8 +38,7 @@ function main(folder)
         end
         searcher = KDTreeSearcher(feats);
         n2 = size(imgsFeat{i+1},2);
-        matches{i} = zeros(n2,4);
-        [H,W,C] = size(images{i});
+        matches{i} = {};
         for j=1:n2
             desc2 = imgsFeat{i+1}{j}.descript;
             %{
@@ -55,45 +56,99 @@ function main(folder)
             feat1 = imgsFeat{i}{id(1)};
             feat2 = imgsFeat{i+1}{j};
             % fix index problem
-            matches{i}(j,1:2) = [feat2.x feat2.y];%getCylindricalCoordinates(feat2.x,feat2.y,H,W,focalLength);
-            matches{i}(j,3:4) = [feat1.x feat1.y];%getCylindricalCoordinates(feat1.x,feat1.y,H,W,focalLength);
+            tmp = zeros(1,4);
+            tmp(1:2) = getCylindricalCoordinates(feat2.x,feat2.y,H,W,focalLength);
+            tmp(3:4) = getCylindricalCoordinates(feat1.x,feat1.y,H,W,focalLength);
+            matches{i} = [matches{i}, tmp];
         end
-        %matchDrawer(cylindricalProjection(images{i+1},focalLength),cylindricalProjection(images{i},focalLength),matches{i},int2str(i));
-        matchDrawer(images{i+1},images{i},matches{i},int2str(i));
+        matchDrawer(cylindricalProjection(images{i+1},focalLength),cylindricalProjection(images{i},focalLength),matches{i},int2str(i));
+        %matchDrawer(images{i+1},images{i},matches{i},int2str(i));
     end
 
     % Match images
     disp('Matching images...');
-    trans = zeros(N-1,2);
+    trans = zeros(N,2);
     for i = 1:N-1
         % RANSAC
-        mx = 0;
-        off = [0 0];
+        tmp_cnt = 0;
+        tmp_vec = zeros(2);
         for j = 1:20
-            n = size(matches{i},1);
+            n = size(matches{i},2);
             id = randsample(n,2);
-            vec = (matches{i}(id(1),1,:)-matches{i}(id(1),2,:)) + (matches{i}(id(2),1,:)-matches{i}(id(2),2,:)) / 2;
-            inlier = 0;
+            vec = (matches{i}{id(1)}(1:2)-matches{i}{id(1)}(3:4)) + (matches{i}{id(2)}(1:2)-matches{i}{id(2)}(3:4)) / 2;
+            c = 0; % temp inlier
             for k = 1:n
-                if norm(squeeze(matches{i}(k,2,:) + vec - matches{i}(k,1,:))) <= 100
-                    inlier = inlier + 1;
+                if norm(matches{i}{k}(1:2) - matches{i}{k}(3:4) - vec) <= 100
+                    c = c + 1;
                 end
             end
-            if inlier > mx
-                mx = inlier;
-                off = squeeze(vec);
+            if c > tmp_cnt
+                tmp_cnt = c;
+                tmp_trans = vec;
             end
         end
-        disp(off);
+        disp([tmp_cnt,tmp_trans]);
+        vecs = zeros(n,2);
+        for k = 1:n
+            if norm(matches{i}{k}(1:2) - matches{i}{k}(3:4) - tmp_trans) <= 100
+                vecs(k,:) = matches{i}{k}(1:2) - matches{i}{k}(3:4);
+            end
+        end
+        trans(i,:) = sum(vecs)/tmp_cnt;
+        disp([cnt,trans]);
     end
-
+    %}
     % Blend images
     disp('Blending images...');
-    panoH = 100;
-    panoW = 100;
-    for i = i:N
-
+    minXY = [1, 1];
+    maxXY = [1, 1];
+    accXY = [1, 1];
+    % 1: 123 109
+    % 2: 125 358
+    trans = zeros(N,2);
+    trans(1,:) = [4, 245];
+    for i = 1:N-1
+        accXY = accXY - round(trans(i,:));
+        minXY = min(minXY, accXY);
+        maxXY = max(maxXY, accXY);
     end
-
+    maxXY = maxXY + [H-1, W-1];
+    pano = zeros([maxXY-minXY+[1,1], 3]);
+    accXY = [1, 1];
+    tmp = getCylindricalCoordinates(0,0.5,H,W,focalLength);
+    LL = ceil(tmp(2));
+    tmp = getCylindricalCoordinates(0,W+0.5,H,W,focalLength);
+    RR = floor(tmp(2));
+    for i = 1:N
+        img = double(cylindricalProjection(images{i},focalLength));
+        wei = ones(1, W);
+        l = LL;
+        r = RR;
+        if i > 1
+            if trans(i-1,2) > 0
+                l = l+int32(trans(i-1,2));
+                wei(l:r) = linspace(1,0,r-l+1);
+            else
+                r = r+int32(trans(i-1,2));
+                wei(l:r) = linspace(0,1,r-l+1);
+            end
+        end
+        if i < N
+            if trans(i,2) < 0
+                l = l-int32(trans(i,2));
+                wei(l:r) = linspace(1,0,r-l+1);
+            else
+                r = r-int32(trans(i,2));
+                wei(l:r) = linspace(0,1,r-l+1);
+            end
+        end
+        img = img .* wei(ones(1, H), :);
+        ul = int32(accXY - minXY + [1, 1]);
+        dr = ul + int32([H-1, W-1]);
+        pano(ul(1):dr(1),ul(2):dr(2),:) = pano(ul(1):dr(1),ul(2):dr(2),:) + img;
+        accXY = accXY - round(trans(i,:));
+    end
     % Write results
+    pano = uint8(pano);
+    imwrite(pano,'pano.png');
 %end
