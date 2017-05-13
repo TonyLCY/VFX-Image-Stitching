@@ -1,14 +1,15 @@
-%function main(folder)
-    folder = '..\input_image\parrington';
+function main(folder)
+    %folder = '..\input_image\parrington';
+    
     % Read images
     disp('Loading images...');
     [images, N] = reader(folder);
     
     % Detect features
     disp('Detecting features...');
-    N = 2;
+    %N = 2;
     [H, W, C] = size(images{1});
-    %{
+    
     for i = 1:N
         features = HarrisDetector(images{i});
         disp(size(features));
@@ -16,16 +17,6 @@
         imgsFeat{i} = features;
     end
 
-    %{
-    disp(imgsFeat{1}{3}.x);
-    disp(imgsFeat{1}{3}.y);
-    disp(imgsFeat{1}{3}.orient);
-    disp(imgsFeat{1}{3}.descript);
-    disp(imgsFeat{1}{32}.x);
-    disp(imgsFeat{1}{32}.y);
-    disp(imgsFeat{1}{32}.orient);
-    disp(imgsFeat{1}{32}.descript);
-    %}
     % Match features
     focalLength = 705;
     matches = {};
@@ -37,32 +28,41 @@
             feats(j,:) = imgsFeat{i}{j}.descript;
         end
         searcher = KDTreeSearcher(feats);
+        
         n2 = size(imgsFeat{i+1},2);
         matches{i} = {};
         for j=1:n2
             desc2 = imgsFeat{i+1}{j}.descript;
-            %{
-            [IDX, D] = knnsearch(searcher, desc2, 'IncludeTies', true);
-            disp(IDX);
-            disp(D);
-            disp('======');
-            %}
             [id, dist] = knnsearch(searcher, desc2, 'k', 2);
+            
             if dist(1) / dist(2) > 0.8
                 continue;
             end
-           
-            %feat1 = imgsFeat{i}{knnsearch(searcher,desc2)};
+            
+            %disp('match');
+            %disp(j);
+            %disp(dist(1));
+            %disp(id(1));
+            
             feat1 = imgsFeat{i}{id(1)};
             feat2 = imgsFeat{i+1}{j};
-            % fix index problem
+            %{
+            disp(feat1.x);
+            disp(feat1.y);
+            disp('-----');
+            disp(feat2.x);
+            disp(feat2.y);
+            disp('=====');
+            %}
+            
+            
             tmp = zeros(1,4);
             tmp(1:2) = getCylindricalCoordinates(feat2.x,feat2.y,H,W,focalLength);
             tmp(3:4) = getCylindricalCoordinates(feat1.x,feat1.y,H,W,focalLength);
             matches{i} = [matches{i}, tmp];
         end
+        
         matchDrawer(cylindricalProjection(images{i+1},focalLength),cylindricalProjection(images{i},focalLength),matches{i},int2str(i));
-        %matchDrawer(images{i+1},images{i},matches{i},int2str(i));
     end
 
     % Match images
@@ -95,7 +95,7 @@
             end
         end
         trans(i,:) = sum(vecs)/tmp_cnt;
-        disp([cnt,trans]);
+        %disp([cnt,trans]);
     end
     %}
     % Blend images
@@ -151,4 +151,4 @@
     % Write results
     pano = uint8(pano);
     imwrite(pano,'pano.png');
-%end
+end

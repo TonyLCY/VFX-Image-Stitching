@@ -8,7 +8,7 @@ classdef Feature
         orients
     end
     methods
-        function feature = Feature(x, y, magnitude, angle)
+        function feature = Feature(x, y, magnitude, angle, image)
             feature.x = x;
             feature.y = y;
             [row, col] = size(magnitude);
@@ -60,11 +60,19 @@ classdef Feature
             weighted_mag = kernel .* mag;
 
             % Construct weighted orientation histogram
+            hist_step = pi / 18;
             bucket = zeros(36);
-            for y = 1:wid
-                for x = 1:wid
-                    region = floor(ang(y, x) / (pi / 18)) + 1;
-                    bucket(region) = bucket(region) + weighted_mag(y, x);
+            for y_coor = 1:wid
+                for x_coor = 1:wid
+                    region = floor(ang(y_coor, x_coor) / hist_step) + 1;
+                    border_diff = mod(ang(y_coor, x_coor), hist_step) / hist_step;
+                    bucket(region) = bucket(region) + weighted_mag(y_coor, x_coor) * (1 - border_diff);
+                    if region < 36
+                        neighbor = region + 1;
+                    else
+                        neighbor = 1;
+                    end
+                    bucket(neighbor) = bucket(neighbor) + weighted_mag(y_coor, x_coor) * border_diff;
                 end
             end
 
@@ -72,10 +80,11 @@ classdef Feature
             [peak_value peak_index] = max(bucket);
             % Find potential multiple orientation
             feature.orients = find(bucket > (0.8 * peak_value));
-            feature.orients = double(feature.orients) .* (pi / 18);
+            feature.orients = double(feature.orients) .* hist_step;
 
             wid = 16;
-            coor_dir_trans = wid / 2 + 0.49;
+            coor_dir_trans = wid / 2 + 0.5;
+            sigma = wid / 2;
             kernel = fspecial('gaussian', [wid wid], sigma);
             for i = 1:size(feature.orients)
                 % Get the surrounding grid of feature after rotated to orientation
@@ -83,48 +92,83 @@ classdef Feature
                 rot = [cos(feature.orients(i)) -sin(feature.orients(i)); sin(feature.orients(i)) cos(feature.orients(i))];
 
                 % Define the magnitude and angle for the grid
-                rot_mag = zeros(wid, wid);
-                rot_ang = zeros(wid, wid);
+                %rot_mag = zeros(wid, wid);
+                %rot_ang = zeros(wid, wid);
 
                 % Get rotated coordinate
+                [Xd, Yd] = meshgrid(-coor_dir_trans:coor_dir_trans, -coor_dir_trans:coor_dir_trans);
+                Xl = reshape(Xd, [], 1);
+                Yl = reshape(Yd, [], 1);
+                P = [Xl Yl];
+                Pr = P * rot;
+                Xl = Pr(:, 1);
+                Xd = reshape(Xl, wid + 2, wid + 2);
+                Yl = Pr(:, 2);
+                Yd = reshape(Yl, wid + 2, wid + 2);
+
+                Xd = Xd + feature.x;
+                Yd = Yd + feature.y;
+
+                % Interpolate gradient
+                grid = interp2(image, Xd, Yd);
+                grid(find(isnan(grid))) = 0;
+
+                gDx = 0.5 * (grid(2:(end - 1), 3:(end)) - grid(2:(end - 1), 1:(end - 2)));
+                gDy = 0.5 * (grid(3:(end), 2:(end - 1)) - grid(1:(end - 2), 2:(end - 1)));
+                rot_mag = sqrt(gDx .^ 2 + gDy .^2);
+                rot_ang = atan2(gDy, gDx);
+                rot_ang(rot_ang < 0) = rot_ang(rot_ang < 0) + 2 * pi;
+                rot_ang = rot_ang - feature.orients(i);
+                rot_ang(rot_ang < 0) = rot_ang(rot_ang < 0) + 2 * pi;
+                weighted_rot_mag = kernel .* rot_mag;
+                %{
                 for y_coor = 1:wid
                     for x_coor = 1:wid
-                        % Assume the coordinates to be within [-7.49:7.51, -7.49:7.51] distant from feature point
-                        % Deviate from 0.5 to include the feature point itself while rounding
                         x_dir = x_coor - coor_dir_trans;
                         y_dir = y_coor - coor_dir_trans;
                         rot_dir = round([y_dir, x_dir] * rot);
                         rot_y_coor = feature.y + rot_dir(1);
                         rot_x_coor = feature.x + rot_dir(2);
+
                         if rot_y_coor < 1 || rot_x_coor < 1 || rot_y_coor > row || rot_x_coor > col
                             rot_mag(y_coor, x_coor) = 0;
                             rot_ang(y_coor, x_coor) = 0;
                         else
                             rot_mag(y_coor, x_coor) = magnitude(rot_y_coor, rot_x_coor);
-                            %rot_ang(y_coor, x_coor) = angle(rot_y_coor, rot_x_coor);
                             rot_ang(y_coor, x_coor) = angle(rot_y_coor, rot_x_coor) - feature.orients(i);
-                            if rot_ang(y_coor, x_coor) < 0
-                                rot_ang(y_coor, x_coor) = rot_ang(y_coor, x_coor) + 2 * pi;
-                            end
                         end
+                        
                     end
                 end
+                rot_ang(rot_ang < 0) = rot_ang(rot_ang < 0) + 2 * pi;
                 weighted_rot_mag = kernel .* rot_mag;
-                %weighted_rot_mag = rot_mag;
-                %disp(weighted_rot_mag);
-                %disp(rot_ang);
-                %disp('====');
+                %}
 
                 % Extract Feature description
                 desc = zeros(1, 128);
+                
                 win_size = wid / 4;
+                hist_step = pi / 4;
                 for y_coor = 1:wid
                     for x_coor = 1:wid
                         win = ceil(x_coor / win_size) + 4 * (ceil(y_coor / win_size) - 1);
-                        reg = floor(rot_ang(y_coor, x_coor) / (pi / 4)) + 1;
+                        reg = floor(rot_ang(y_coor, x_coor) / hist_step) + 1;
+                        border_diff = mod(ang(y_coor, x_coor), hist_step) / hist_step;
                         slot = 8 * (win - 1) + reg;
-                        desc(slot) = desc(slot) + weighted_rot_mag(y_coor, x_coor);
+                        desc(slot) = desc(slot) + weighted_rot_mag(y_coor, x_coor) * (1 - border_diff);
+                        if reg < 8
+                            slot = slot + 1;
+                        else
+                            slot = slot - 7;
+                        end
+                        desc(slot) = desc(slot) + weighted_rot_mag(y_coor, x_coor) * border_diff;
                     end
+                end
+                
+
+                if norm(desc) == 0
+                    feature.descripts{i} = desc;
+                    continue;
                 end
 
                 % Normalized description
@@ -132,7 +176,6 @@ classdef Feature
                 % Threshold largest value to 0.2 to reduce influence of large gradient magnitudes
                 desc(desc > 0.2) = 0.2;
                 desc = desc / norm(desc);
-                %disp(desc);
 
                 feature.descripts{i} = desc;
             end

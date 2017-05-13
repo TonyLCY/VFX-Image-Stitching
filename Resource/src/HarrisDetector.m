@@ -1,7 +1,7 @@
 function features = HarrisDetector(image)
     k = 0.04;
-    threshold = 3;
-    sigma = 1;
+    threshold = 4000;
+    sigma = 3;
 
     % Turn image to grey scale
     img = rgb2gray(image);
@@ -9,8 +9,11 @@ function features = HarrisDetector(image)
     % Convert img to double (to make gradient works)
     img = double(img);
     
+    % Get Gaussian filter
+    filter = fspecial('gaussian', [5 5], sigma);
+
     % Smooth image
-    img = imgaussfilt(img, sigma);
+    img = filter2(filter, img);
 
     % Compute x, y derivatives
     [Ix, Iy] = gradient(img);
@@ -19,9 +22,6 @@ function features = HarrisDetector(image)
     Ix2 = Ix .^ 2;
     Iy2 = Iy .^ 2;
     Ixy = Ix .* Iy;
-
-    % Get Gaussian filter
-    filter = fspecial('gaussian', [5 5], sigma);
 
     % Compute sums of the products of derivatives
     Sx2 = filter2(filter, Ix2);
@@ -32,16 +32,17 @@ function features = HarrisDetector(image)
     R = (Sx2 .* Sy2 - Sxy .^ 2) - k * (Sx2 + Sy2) .^ 2;
 
     % Threshold on value R and compute nonmax suppression
-    result = (R > threshold) & (R > imdilate(R, [1 1 1; 1 0 1; 1 1 1]));
+    result = R > threshold;
+    result = result & (R > imdilate(R, [1 1 1; 1 0 1; 1 1 1]));
 
     % Calculate magnitude and angle prior to Feature creating
-    [mag, ang] = preDescriptor(img);
+    [mag, ang] = preDescriptor(image);
 
     % Create Feature objects
     [resultY, resultX] = find(result);
     features = {};
-    radius = 8;
-    r2 = radius ^ 2;
+    %radius = 8;
+    %r2 = radius ^ 2;
     for i = 1:size(resultY)
         % Ignore features with another feature within distance radius
         %{
@@ -57,10 +58,12 @@ function features = HarrisDetector(image)
         end
         %}
 
-        feature = Feature(resultY(i), resultX(i), mag, ang);
-        if feature.x == NaN
+        feature = Feature(resultY(i), resultX(i), mag, ang, img);
+        
+        if isnan(feature.x)
             continue;
         end
+        
         % Split multiple orientations to individual features
         split_features = {};
         for j = 1:size(feature.orients)
@@ -69,8 +72,6 @@ function features = HarrisDetector(image)
             split_features{j}.orient = feature.orients(j);
             split_features{j}.descript = feature.descripts{j};
         end
-        for j = 1:size(split_features, 2)
-            features = [features, split_features{j}];
-        end
+        features = [features, split_features];
     end
 end
