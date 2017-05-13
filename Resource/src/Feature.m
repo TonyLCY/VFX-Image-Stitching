@@ -14,7 +14,7 @@ classdef Feature
             [row, col] = size(magnitude);
             
             % Define window for feature point
-            halfwid = 8;
+            halfwid = 4;
             wid = 2 * halfwid + 1;
             
             % Exclude out of bound patch
@@ -153,7 +153,7 @@ classdef Feature
                     for x_coor = 1:wid
                         win = ceil(x_coor / win_size) + 4 * (ceil(y_coor / win_size) - 1);
                         reg = floor(rot_ang(y_coor, x_coor) / hist_step) + 1;
-                        border_diff = mod(ang(y_coor, x_coor), hist_step) / hist_step;
+                        border_diff = mod(rot_ang(y_coor, x_coor), hist_step) / hist_step;
                         slot = 8 * (win - 1) + reg;
                         desc(slot) = desc(slot) + weighted_rot_mag(y_coor, x_coor) * (1 - border_diff);
                         if reg < 8

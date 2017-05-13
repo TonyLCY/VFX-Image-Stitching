@@ -6,14 +6,14 @@ function features = HarrisDetector(image)
     % Turn image to grey scale
     img = rgb2gray(image);
 
-    % Convert img to double (to make gradient works)
+    % Convert img to double
     img = double(img);
     
     % Get Gaussian filter
     filter = fspecial('gaussian', [5 5], sigma);
 
     % Smooth image
-    img = filter2(filter, img);
+    %img = filter2(filter, img);
 
     % Compute x, y derivatives
     [Ix, Iy] = gradient(img);
@@ -36,7 +36,7 @@ function features = HarrisDetector(image)
     result = result & (R > imdilate(R, [1 1 1; 1 0 1; 1 1 1]));
 
     % Calculate magnitude and angle prior to Feature creating
-    [mag, ang] = preDescriptor(image);
+    [mag, ang, img] = preDescriptor(image);
 
     % Create Feature objects
     [resultY, resultX] = find(result);
@@ -60,6 +60,7 @@ function features = HarrisDetector(image)
 
         feature = Feature(resultY(i), resultX(i), mag, ang, img);
         
+        % Grid surround feature out of bound
         if isnan(feature.x)
             continue;
         end
