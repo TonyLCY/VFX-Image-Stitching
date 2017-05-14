@@ -96,6 +96,8 @@ classdef Feature
                 %rot_ang = zeros(wid, wid);
 
                 % Get rotated coordinate
+
+                %{
                 [Xd, Yd] = meshgrid(-coor_dir_trans:coor_dir_trans, -coor_dir_trans:coor_dir_trans);
                 Xl = reshape(Xd, [], 1);
                 Yl = reshape(Yd, [], 1);
@@ -118,10 +120,11 @@ classdef Feature
                 rot_mag = sqrt(gDx .^ 2 + gDy .^2);
                 rot_ang = atan2(gDy, gDx);
                 rot_ang(rot_ang < 0) = rot_ang(rot_ang < 0) + 2 * pi;
-                rot_ang = rot_ang - feature.orients(i);
-                rot_ang(rot_ang < 0) = rot_ang(rot_ang < 0) + 2 * pi;
+                %rot_ang = rot_ang - feature.orients(i);
+                %rot_ang(rot_ang < 0) = rot_ang(rot_ang < 0) + 2 * pi;
                 weighted_rot_mag = kernel .* rot_mag;
-                %{
+                %}
+                
                 for y_coor = 1:wid
                     for x_coor = 1:wid
                         x_dir = x_coor - coor_dir_trans;
@@ -135,14 +138,15 @@ classdef Feature
                             rot_ang(y_coor, x_coor) = 0;
                         else
                             rot_mag(y_coor, x_coor) = magnitude(rot_y_coor, rot_x_coor);
-                            rot_ang(y_coor, x_coor) = angle(rot_y_coor, rot_x_coor) - feature.orients(i);
+                            %rot_ang(y_coor, x_coor) = angle(rot_y_coor, rot_x_coor) - feature.orients(i);
+                            rot_ang(y_coor, x_coor) = angle(rot_y_coor, rot_x_coor);
                         end
                         
                     end
                 end
-                rot_ang(rot_ang < 0) = rot_ang(rot_ang < 0) + 2 * pi;
+                %rot_ang(rot_ang < 0) = rot_ang(rot_ang < 0) + 2 * pi;
                 weighted_rot_mag = kernel .* rot_mag;
-                %}
+                
 
                 % Extract Feature description
                 desc = zeros(1, 128);

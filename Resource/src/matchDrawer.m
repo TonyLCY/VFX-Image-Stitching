@@ -6,6 +6,7 @@ function matchDrawer(img2, img1, match, name)
     image(1:H,W+1:2*W,:) = img1;
     n = size(match, 2);
     pos = zeros(n, 4);
+    disp('Found matches:');
     disp(n);
     for i = 1:n
         pos(i,1) = match{i}(1);

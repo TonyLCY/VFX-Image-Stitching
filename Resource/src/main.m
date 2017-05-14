@@ -12,7 +12,6 @@ function main(folder)
     
     for i = 1:N
         features = HarrisDetector(images{i});
-        disp(size(features));
         featureDrawer(images{i}, features, int2str(i));
         imgsFeat{i} = features;
     end
