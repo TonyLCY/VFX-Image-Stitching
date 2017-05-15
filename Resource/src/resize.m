@@ -13,6 +13,6 @@ function resize(folder1, folder2)
         %rsimg = imrotate(simg, 90);
         %result = rsimg;
         % write
-        imwrite(result, [folder2, '/image_', int2str(i),'.jpg']);
+        imwrite(result, [folder2, '/image_', num2str(i, '%02d'),'.jpg']);
     end
 end

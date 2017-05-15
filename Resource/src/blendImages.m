@@ -11,13 +11,13 @@ function pano = blendImages(images, N, fLen, trans)
     end
     panoWH = maxXY - minXY + [W,H];
     pano = zeros(panoWH(2),panoWH(1),3);
-    tmp = getCylindricalCoordinates(0.5,0,H,W,fLen);
+    tmp = getCylindricalCoordinates(0.5,0,H,W,mean(fLen));
     LL = ceil(tmp(1));
-    tmp = getCylindricalCoordinates(W+0.5,0,H,W,fLen);
+    tmp = getCylindricalCoordinates(W+0.5,0,H,W,mean(fLen));
     RR = floor(tmp(1));
     accXY = [1, 1];
     for i = 1:N
-        img = double(cylindricalProjection(images{i},fLen));
+        img = double(cylindricalProjection(images{i},fLen(i)));
         wei = ones(1, W);
         if i > 1
             l = LL;
