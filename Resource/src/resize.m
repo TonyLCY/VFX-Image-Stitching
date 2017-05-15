@@ -7,7 +7,7 @@ function resize(folder1, folder2)
         img = imread(filename);
         [row, col, channel] = size(img);
         % scale down
-        simg = imresize(img, [row / 2, col / 2]);
+        simg = imresize(img, [row / 4, col / 4]);
         result = simg;
         % rotate
         %rsimg = imrotate(simg, 90);

@@ -1,18 +1,17 @@
 function newImg = cylindricalProjection(oldImg, fLen)
     [H,W,C] = size(oldImg);
     newImg = uint8(zeros(H,W,C));
-    for r = 1:H
-        for c = 1:W
-            x = r - (1+H)/2;
-            y = c - (1+W)/2;
-            y = fLen * tan(y/fLen);
-            x = x * sqrt(y^2 + fLen^2) / fLen;
-            x = x + (1+H)/2;
-            y = y + (1+W)/2;
-            if x<1 || x>H || y<1 || y>W
-                continue
+    for i = 1:H
+        for j = 1:W
+            r = i - (1+H)/2;
+            c = j - (1+W)/2;
+            c = fLen * tan(c/fLen);
+            r = r * sqrt(c^2 + fLen^2) / fLen;
+            r = r + (1+H)/2;
+            c = c + (1+W)/2;
+            if r>=1 && r<=H && c>=1 && c<=W
+                newImg(i,j,:) = oldImg(int16(r),int16(c),:);
             end
-            newImg(r,c,:) = oldImg(int16(x),int16(y),:);
         end
     end
 end
