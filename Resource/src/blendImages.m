@@ -1,4 +1,4 @@
-function pano = blendImages(images, N, fLens, trans)
+function pano = blendImages(images, N, R, fLens, trans)
     [H, W, C] = size(images{1});
     minXY = [0, 0];
     maxXY = [0, 0];
@@ -14,7 +14,7 @@ function pano = blendImages(images, N, fLens, trans)
     accXY = -minXY;
     LR = [panoWH(2), 1];
     for i = 1:N
-        [img, pos, lr] = cylindricalProjection(images{i},accXY,fLens(i));
+        [img, pos, lr] = cylindricalProjection(images{i},accXY,R,fLens(i));
         wei = zeros(1,W);
         if lr(1)<LR(2)-pos(1) && LR(2)-pos(1)<lr(2)
             tl = lr(1);

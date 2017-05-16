@@ -4,6 +4,7 @@ function main(folder)
     % Read images
     disp('Loading images...');
     [images, fLens, N] = reader(folder);
+    R = mean(fLens);
     [H, W, C] = size(images{1});
     
     % Detect features
@@ -30,13 +31,13 @@ function main(folder)
     disp('Matching images...');
     trans = zeros(N,2);
     for i = 1:N-1
-        posPairs = id2Pos({imgsFeat{i},imgsFeat{i+1}},matchIds{i},H,W,fLens(i:i+1));
+        posPairs = id2Pos({imgsFeat{i},imgsFeat{i+1}},matchIds{i},H,W,R,fLens(i:i+1));
         trans(i,:) = calculateTranslation(posPairs);
     end
     
     % Blend images
     disp('Blending images...');
-    pano = blendImages(images, N, fLens, trans);
+    pano = blendImages(images, N, R, fLens, trans);
     
     % Write results
     %imwrite(pano,[folder,'/pano.png']);
