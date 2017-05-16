@@ -1,6 +1,6 @@
 function features = HarrisDetector(image)
     k = 0.04;
-    threshold = 4000;
+    threshold = 100; % 4000 for parrington
     sigma = 3;
 
     % Turn image to grey scale
@@ -10,7 +10,7 @@ function features = HarrisDetector(image)
     img = double(img);
     
     % Get Gaussian filter
-    filter = fspecial('gaussian', [5 5], sigma);
+    filter = fspecial('gaussian', [3 3], sigma);
 
     % Smooth image
     %img = filter2(filter, img);

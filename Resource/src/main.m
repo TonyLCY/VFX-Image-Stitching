@@ -8,7 +8,7 @@ function main(folder)
     [H, W, C] = size(images{1});
     
     % Detect features
-    %N = 4;
+    %N = 8;
     disp('Detecting features...');
     for i = 1:N
         features = HarrisDetector(images{i});
@@ -30,7 +30,7 @@ function main(folder)
     trans = zeros(N,2);
     for i = 1:N-1
         posPairs = id2Pos({imgsFeat{i},imgsFeat{i+1}},matchIds{i},H,W,fLen, i);
-        %matchDrawer({cylindricalProjection(images{i},fLen(i)),cylindricalProjection(images{i+1},fLen(i+1))},posPairs,num2str(i, '%02d'));
+        matchDrawer({cylindricalProjection(images{i},fLen(i)),cylindricalProjection(images{i+1},fLen(i+1))},posPairs,num2str(i, '%02d'));
         trans(i,:) = calculateTranslation(posPairs);
     end
     
