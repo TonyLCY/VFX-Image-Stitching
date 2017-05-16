@@ -10,6 +10,7 @@ function main(folder)
     disp('Detecting features...');
     for i = 1:N
         features = HarrisDetector(images{i});
+        % Draw features
         %featureDrawer(images{i}, features, num2str(i, '%02d'));
         disp('Found features:');
         disp(size(features, 2));
@@ -21,7 +22,8 @@ function main(folder)
     disp('Matching features...');
     for i = 1:N-1
         matchIds{i} = matchFeatures(imgsFeat{i},imgsFeat{i+1});
-        matchDrawer({images{i},images{i+1}},{imgsFeat{i},imgsFeat{i+1}},matchIds{i},num2str(i, '%02d'));
+        % Draw matches
+        %matchDrawer({images{i},images{i+1}},{imgsFeat{i},imgsFeat{i+1}},matchIds{i},num2str(i, '%02d'));
     end
 
     % Match images
@@ -38,5 +40,5 @@ function main(folder)
     
     % Write results
     %imwrite(pano,[folder,'/pano.png']);
--   imwrite(pano, '../result/pano.png');
+    imwrite(pano, '../result/pano.png');
 end

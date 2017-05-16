@@ -98,6 +98,7 @@ classdef Feature
                 % Get rotated coordinate
 
                 %{
+                % Interpolation method
                 [Xd, Yd] = meshgrid(-coor_dir_trans:coor_dir_trans, -coor_dir_trans:coor_dir_trans);
                 Xl = reshape(Xd, [], 1);
                 Yl = reshape(Yd, [], 1);
@@ -125,6 +126,7 @@ classdef Feature
                 weighted_rot_mag = kernel .* rot_mag;
                 %}
                 
+                % Round up method
                 for y_coor = 1:wid
                     for x_coor = 1:wid
                         x_dir = x_coor - coor_dir_trans;

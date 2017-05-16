@@ -1,4 +1,5 @@
 function pano = blendImages(images, N, fLens, trans)
+    [H, W, C] = size(images{1});
     minXY = [0, 0];
     maxXY = [0, 0];
     accXY = [0, 0];

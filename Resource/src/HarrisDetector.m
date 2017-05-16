@@ -1,6 +1,6 @@
 function features = HarrisDetector(image)
     k = 0.04;
-    threshold = 4000; % 4000 for parrington
+    threshold = 100; % 4000 for parrington
     sigma = 3;
 
     % Turn image to grey scale
