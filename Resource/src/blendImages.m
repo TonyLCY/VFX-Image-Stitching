@@ -1,52 +1,43 @@
-function pano = blendImages(images, N, fLen, trans)
-    %trans(1,:) = [-245,-4];
-    [H, W, C] = size(images{1});
-    minXY = [1, 1];
-    maxXY = [1, 1];
-    accXY = [1, 1];
+function pano = blendImages(images, N, fLens, trans)
+    minXY = [0, 0];
+    maxXY = [0, 0];
+    accXY = [0, 0];
     for i = 1:N-1
-        accXY = accXY + round(trans(i,:));
+        accXY = accXY + trans(i,:);
         minXY = min(minXY, accXY);
         maxXY = max(maxXY, accXY);
     end
-    panoWH = maxXY - minXY + [W,H];
+    panoWH = int32(ceil(maxXY - minXY + [W,H]));
     pano = zeros(panoWH(2),panoWH(1),3);
-    tmp = getCylindricalCoordinates(0.5,0,H,W,mean(fLen));
-    LL = ceil(tmp(1));
-    tmp = getCylindricalCoordinates(W+0.5,0,H,W,mean(fLen));
-    RR = floor(tmp(1));
-    accXY = [1, 1];
+    
+    accXY = -minXY;
+    LR = [panoWH(2), 1];
     for i = 1:N
-        img = double(cylindricalProjection(images{i},fLen(i)));
-        wei = ones(1, W);
-        if i > 1
-            l = LL;
-            r = RR;
-            if trans(i-1,1) < 0
-                l = l-int32(trans(i-1,1));
-                wei(l:r) = linspace(1,0,r-l+1);
-            else
-                r = r-int32(trans(i-1,1));
-                wei(l:r) = linspace(0,1,r-l+1);
+        [img, pos, lr] = cylindricalProjection(images{i},accXY,fLens(i));
+        wei = zeros(1,W);
+        if lr(1)<LR(2)-pos(1) && LR(2)-pos(1)<lr(2)
+            tl = lr(1);
+            tr = LR(2)-pos(1);
+            wei(tl:tr) = linspace(0,1,tr-tl+1);
+        elseif lr(1)<LR(1)-pos(1) && LR(1)-pos(1)<lr(2)
+            tl = LR(1)-pos(1);
+            tr = lr(2);
+            wei(tl:tr) = linspace(1,0,tr-tl+1);
+        end
+        for r = 1:H
+            for c = 1:W
+                rr = pos(2)+r;
+                cc = pos(1)+c;
+                if ~any(pano(rr,cc,:))
+                    pano(rr,cc,:) = img(r,c,:);
+                elseif any(img(r,c,:))
+                    pano(rr,cc,:) = pano(rr,cc,:)*(1-wei(c))+img(r,c,:)*wei(c);
+                end
             end
         end
-        if i < N
-            l = LL;
-            r = RR;
-            if trans(i,1) > 0
-                l = l+int32(trans(i,1));
-                wei(l:r) = linspace(1,0,r-l+1);
-            else
-                r = r+int32(trans(i,1));
-                wei(l:r) = linspace(0,1,r-l+1);
-            end
-        end
-        img = img .* wei(ones(1, H), :);
-        ul = int32(accXY - minXY + [1, 1]);
-        dr = ul + int32([W-1, H-1]);
-        %disp([ul,dr]);
-        pano(ul(2):dr(2),ul(1):dr(1),:) = pano(ul(2):dr(2),ul(1):dr(1),:) + img;
-        accXY = accXY + round(trans(i,:));
+        LR(1) = min(LR(1),pos(1)+lr(1));
+        LR(2) = max(LR(2),pos(1)+lr(2));
+        accXY = accXY + trans(i,:);
     end
     pano = uint8(pano);
 end
