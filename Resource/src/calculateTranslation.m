@@ -1,7 +1,7 @@
 function tran = calculateTranslation(pairs)
     % RANSAC
     THRES = 40;
-    REP = 40;
+    REP = 60;
     n = size(pairs,1);
     tmp_cnt = 0;
     tmp_tran = zeros(2);
