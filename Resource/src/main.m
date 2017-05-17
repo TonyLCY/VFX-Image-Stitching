@@ -24,7 +24,7 @@ function main(folder)
     for i = 1:N-1
         matchIds{i} = matchFeatures(imgsFeat{i},imgsFeat{i+1});
         % Draw matches
-        %matchDrawer({images{i},images{i+1}},{imgsFeat{i},imgsFeat{i+1}},matchIds{i},num2str(i, '%02d'));
+        matchDrawer({images{i},images{i+1}},{imgsFeat{i},imgsFeat{i+1}},matchIds{i},num2str(i, '%02d'));
     end
 
     % Match images
