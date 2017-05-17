@@ -12,6 +12,6 @@ function matchDrawer(imgs, feats, idPairs, name)
         pos(i,3) = feats{2}{idPairs(i,2)}.x+W;
         pos(i,4) = feats{2}{idPairs(i,2)}.y;
     end
-    image = insertShape(image,'Line',pos,'LineWidth',1);
+    image = insertShape(image,'Line',pos,'LineWidth',2,'color',256*rand(n,3));
     imwrite(image, ['../result/match_', name, '.jpg']);
 end
